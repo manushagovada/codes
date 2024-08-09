@@ -1,0 +1,229 @@
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="WebForm1.aspx.cs" Inherits="CreativeSolutions1.WebForm1" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title></title>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <div>
+            <asp:Label ID="Label1" runat="server" Text="Login Form" Font-Size="XX-Large" Font-Bold="true" ForeColor="#9900CC"></asp:Label>
+ 
+</div>
+<div>
+<asp:Label ID="Label2" runat="server" Text="Username:" Font-Bold="true" Font-Size="Larger"></asp:Label>
+<asp:TextBox ID="TextBox1" runat="server" ></asp:TextBox>
+</div>
+<div>
+<asp:Label ID="Label3" runat="server" Text="Password: " Font-Bold="true" Font-Size="Larger"></asp:Label>
+<asp:TextBox ID="TextBox2" runat="server" TextMode="Password" ></asp:TextBox>
+</div>
+<input class="checkbox" type="checkbox" onchange="document.getElementById('TextBox2').type=this.checked? 'text': 'password'" />Show Password
+<div>
+<asp:Button CssClass="btn-login" Font-Size="Large" ID="Button1" runat="server" Text="Login" ForeColor="White" BackColor="#33CC33" Height="40px" Width="90px" OnClick="Button1_Click" />
+ 
+<asp:Button CssClass="btn-cancel" ID="Button2" runat="server" Font-Size="Large" Text="Cancel" ForeColor="White" BackColor="Red" Height="40px" Width="90px" />
+   
+
+        </div>
+    </form>
+</body>
+</html>
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+
+namespace CreativeSolutions1
+{
+    public partial class WebForm1 : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+
+        }
+        public static class PasswordHelper
+        {
+            public static string HashPassword(string password)
+            {
+                using (SHA256 sha256 = SHA256.Create())
+                {
+                    byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+                    StringBuilder builder = new StringBuilder();
+                    foreach (byte b in bytes)
+                    {
+                        builder.Append(b.ToString("x2"));
+                    }
+                    return builder.ToString();
+                }
+            }
+        }
+        protected void Button1_Click(object sender, EventArgs e)
+        {
+            // Create connection
+            SqlConnection con = new SqlConnection("Data Source=MANUSHA\\SQLEXPRESS;DataBase=Manusha;user id=sa;Password=Manusha@1997;");
+            con.Open();
+
+            // Hash the entered password (assuming you have a hashing method)
+            string hashedPassword = PasswordHelper.HashPassword(TextBox2.Text);
+
+            // Prepare the SQL query to check login credentials
+            string loginQuery = "SELECT COUNT(*) FROM Login WHERE Username=@Username AND PasswordHash=@PasswordHash";
+            SqlCommand cmd = new SqlCommand(loginQuery, con);
+            cmd.Parameters.AddWithValue("@Username", TextBox1.Text);
+            cmd.Parameters.AddWithValue("@PasswordHash", hashedPassword);
+
+            // Execute the query
+            int count = (int)cmd.ExecuteScalar();
+            con.Close();
+
+            // Check the result
+            if (count > 0)
+            {
+                // Successful login
+                Response.Write("<script>alert('Login successful');</script>");
+                // Redirect to a different page after successful login if needed
+                // Response.Redirect("HomePage.aspx");
+            }
+            else
+            {
+                // Login failed, redirect to registration page
+                Response.Write("<script>alert('Login failed. Redirecting to registration page...');</script>");
+                Response.Redirect("WebForm2.aspx");
+            }
+        }
+    }
+}
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="WebForm2.aspx.cs" Inherits="CreativeSolutions1.WebForm2" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>User Registration</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="container">
+ 
+<form class="row g-3 bg-light" runat="server" method="post">
+<div class="bg-primary p-4 rounded mb-3 mt-3">
+<h1 class="text-center text-light">User Registration Form</h1>
+</div>
+<div class="col-md-6">
+<label for="inputEmail4" class="form-label">Email</label>
+<asp:TextBox ID="txtEmail" CssClass="form-control" runat="server"></asp:TextBox>
+</div>
+<div class="col-md-6">
+<label for="inputPassword4" class="form-label">Password</label>
+<asp:TextBox ID="txtPass" CssClass="form-control" runat="server" TextMode="Password"></asp:TextBox>
+</div>
+<div class="col-md-6">
+<label for="inputEmail4" class="form-label">First Name</label>
+<asp:TextBox ID="txtFname" CssClass="form-control" runat="server"></asp:TextBox>
+</div>
+<div class="col-md-6">
+<label for="inputPassword4" class="form-label">Last Name</label>
+<asp:TextBox ID="txtLname" CssClass="form-control" runat="server"></asp:TextBox>
+</div>
+<div class="col-12">
+<label for="inputAddress" class="form-label">Address</label>
+<asp:TextBox ID="txtAdd" CssClass="form-control" runat="server"></asp:TextBox>
+</div>
+ 
+<div class="col-md-4">
+<label for="inputCity" class="form-label">Phone</label>
+<asp:TextBox ID="txtPhone" CssClass="form-control" runat="server"></asp:TextBox>
+</div>
+<div class="col-md-4">
+<label for="inputState" class="form-label">Gender</label>
+<asp:DropDownList ID="DropDownList1" CssClass="form-select" runat="server">
+ 
+<asp:ListItem Value="male">Male</asp:ListItem>
+<asp:ListItem Value="female">Female</asp:ListItem>
+<asp:ListItem Value="others">Others</asp:ListItem>
+<asp:ListItem></asp:ListItem>
+</asp:DropDownList>
+</div>
+<div class="col-md-4">
+<label for="inputZip" class="form-label">DOB</label>
+<asp:TextBox ID="txtDOB" CssClass="form-control" runat="server" TextMode="DateTimeLocal"></asp:TextBox>
+</div>
+ 
+<div class="col-12 mb-3">
+<asp:Button ID="Button1" CssClass="btn btn-primary" runat="server" Text="Register" OnClick="Button1_Click" />
+</div>
+</form>
+ 
+</div>
+</body>
+ 
+&nbsp;
+</body>
+</html>
+using System;
+using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+
+namespace CreativeSolutions1
+{
+    public partial class WebForm2 : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+
+        }
+        protected void Button1_Click(object sender, EventArgs e)
+        {
+            DateTime dob;
+            if (DateTime.TryParse(txtDOB.Text, out dob))
+            {
+                SqlConnection con = new SqlConnection("Data Source=MANUSHA\\SQLEXPRESS; Database=Manusha;user id=sa;Password=Manusha@1997");
+                con.Open();
+
+                string insertQuery = "INSERT INTO Register (email, pass, fname, lname, address, phone, gender, dob) VALUES(@Email, @Pass, @Fname, @Lname, @Address, @Phone, @Gender, @Dob)";
+                SqlCommand cmd = new SqlCommand(insertQuery, con);
+
+                cmd.Parameters.AddWithValue("@Email", txtEmail.Text);
+                cmd.Parameters.AddWithValue("@Pass", txtPass.Text);
+                cmd.Parameters.AddWithValue("@Fname", txtFname.Text);
+                cmd.Parameters.AddWithValue("@Lname", txtLname.Text);
+                cmd.Parameters.AddWithValue("@Address", txtAdd.Text);
+                cmd.Parameters.AddWithValue("@Phone", txtPhone.Text);
+                cmd.Parameters.AddWithValue("@Gender", DropDownList1.SelectedItem.ToString());
+
+                // Add date as a parameter
+                cmd.Parameters.AddWithValue("@Dob", dob);
+
+                int count = cmd.ExecuteNonQuery();
+                if (count > 0)
+                {
+                    Response.Write("<script type='text/javascript'>alert('Registered successfully')</script>");
+                }
+                else
+                {
+                    Response.Write("<script type='text/javascript'>alert('Error in registration')</script>");
+                }
+
+                con.Close();
+            }
+            else
+            {
+                Response.Write("<script type='text/javascript'>alert('Invalid date format')</script>");
+            }
+        }
+    }
+}
