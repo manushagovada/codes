@@ -1,0 +1,232 @@
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="WebForm1.aspx.cs" Inherits="CreativeSolutions.WebForm1" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>CRUD OPERATIONS</title>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <div>
+            <asp:Label ID="Label1" runat="server" Text="ID"></asp:Label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<asp:TextBox ID="TextBox1" runat="server"></asp:TextBox><br /><br />
+            <asp:Label ID="Label2" runat="server" Text="Name"></asp:Label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<asp:TextBox ID="TextBox2" runat="server"></asp:TextBox><br /><br />
+            <asp:Label ID="Label3" runat="server" Text="Email"></asp:Label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<asp:TextBox ID="TextBox3" runat="server"></asp:TextBox><br /><br />
+            <asp:Label ID="Label4" runat="server" Text="PhoneNumber"></asp:Label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<asp:TextBox ID="TextBox4" runat="server"></asp:TextBox><br /><br />
+            &nbsp;&nbsp;&nbsp;<asp:Button ID="btnSave" runat="server" Text="Save" OnClick="btnSave_Click"/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<asp:Button ID="btnUpdate" runat="server" Text="Update"  OnClick="btnUpdate_Click"/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<asp:Button ID="btnDelete" runat="server" Text="Delete" OnClick="btnDelete_Click" /><br /><br />
+                       <asp:GridView ID="GridView1" runat="server" AutoGenerateColumns="false" OnRowEditing="GridView1_RowEditing" DataKeyNames="ID" OnRowCancelingEdit="GridView1_RowCancellingEdit" OnRowUpdating="GridView1_RowUpdating" AutoGenerateSelectButton="True" AutoGenerateEditButton="True" OnSelectedIndexChanged="GridView1_SelectedIndexChanged">
+
+                <Columns>
+                    <asp:BoundField DataField="ID" HeaderText="ID" />
+                    <asp:BoundField DataField="Name" HeaderText="Name" />
+                    <asp:BoundField DataField="Email" HeaderText="Email" />
+                    <asp:BoundField DataField="PhoneNumber" HeaderText="PhoneNumber" />
+
+                </Columns>
+            </asp:GridView>
+
+        </div>
+    </form>
+</body>
+</html>
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Data;
+using System.Data.SqlClient;
+using System.Drawing.Drawing2D;
+using System.Drawing;
+
+namespace CreativeSolutions
+{
+    public partial class WebForm1 : System.Web.UI.Page
+    {
+        SqlConnection con = new SqlConnection("data source = MANUSHA\\SQLEXPRESS;Database=Manusha;User id=sa;Password=Manusha@1997;");
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (!IsPostBack)
+            {
+                BindGridView();
+            }
+
+        }
+
+        protected void btnSave_Click(object sender, EventArgs e)
+
+        {
+            try
+            {
+                con.Open();
+                SqlCommand getMaxIdCmd = new SqlCommand("SELECT ISNULL(MAX(ID), 0) + 1 FROM Creative5", con);
+                int newId = (int)getMaxIdCmd.ExecuteScalar();
+                SqlCommand cmd = new SqlCommand("insert into Creative5 (Name ,Email,PhoneNumber)values (@Name,@Email,@PhoneNumber)", con);
+                cmd.Parameters.AddWithValue("@Name", TextBox2.Text);
+                cmd.Parameters.AddWithValue("@Email", TextBox3.Text);
+                cmd.Parameters.AddWithValue("@PhoneNumber", TextBox4.Text);
+                cmd.ExecuteNonQuery();
+
+
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", "alert('Saved Successfully');", true);
+            }
+            catch (SqlException sqlEx)
+            {
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", $"alert('Error:{sqlEx.Message}');", true);
+            }
+            catch (Exception ex)
+            {
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", $"alert('Error:{ex.Message}');", true);
+            }
+            finally
+            {
+                con.Close();
+            }
+
+            ClearFields();
+            BindGridView();
+        }
+
+        protected void btnUpdate_Click(object sender, EventArgs e)
+        {
+            con.Open();
+            SqlCommand cmd = new SqlCommand("Update Creative5 Set Name=@Name,Email=@Email,PhoneNumber=@PhoneNumber where ID=@ID", con);
+            cmd.Parameters.AddWithValue("@ID", TextBox1.Text);
+            cmd.Parameters.AddWithValue("@Name", TextBox2.Text);
+            cmd.Parameters.AddWithValue("@Email", TextBox3.Text);
+            cmd.Parameters.AddWithValue("@PhoneNumber", TextBox4.Text);
+            cmd.ExecuteNonQuery();
+            con.Close();
+            ClearFields();
+            BindGridView();
+            ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", "alert('Updated Successfully');", true);
+        }
+
+        protected void btnDelete_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                con.Open();
+                SqlCommand deleteCmd = new SqlCommand("DELETE FROM Creative5 WHERE ID=@ID", con);
+                deleteCmd.Parameters.AddWithValue("@ID", Convert.ToInt32(TextBox1.Text));
+                deleteCmd.ExecuteNonQuery();
+
+                // Step 2: Reset the identity seed
+                SqlCommand resetIdentityCmd = new SqlCommand("DBCC CHECKIDENT ('Creative5', RESEED, 0)", con);
+                resetIdentityCmd.ExecuteNonQuery();
+
+                // SqlCommand cmd = new SqlCommand("DELETE FROM Creative5 WHERE ID=@ID", con);
+                // cmd.Parameters.AddWithValue("@ID", Convert.ToInt32(TextBox1.Text)); // Fetch ID from the TextBox
+                //cmd.ExecuteNonQuery();
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", "alert('Deleted Successfully');", true);
+            }
+            finally
+            {
+                con.Close();
+            }
+            ClearFields();
+            BindGridView();
+        }
+
+
+        protected void GridView1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            GridViewRow row = GridView1.SelectedRow;
+            // Correctly fetch the ID
+            TextBox1.Text = row.Cells[1].Text;
+            TextBox2.Text = row.Cells[2].Text;
+            TextBox3.Text = row.Cells[3].Text;
+            TextBox4.Text = row.Cells[4].Text;
+
+        }
+        protected void GridView1_RowEditing(object sender, GridViewEditEventArgs e)
+        {
+            GridView1.EditIndex = e.NewEditIndex;
+            BindGridView();
+        }
+        protected void GridView1_RowCancellingEdit(object sender, GridViewCancelEditEventArgs e)
+        {
+            GridView1.EditIndex = -1;
+            BindGridView();
+        }
+        protected void GridView1_RowUpdating(object sender, GridViewUpdateEventArgs e)
+        {
+            try
+            {
+                GridViewRow row = GridView1.Rows[e.RowIndex];
+                int ID;
+
+                if (GridView1.DataKeys[e.RowIndex].Values[0] != DBNull.Value)
+                {
+                    ID = Convert.ToInt32(GridView1.DataKeys[e.RowIndex].Values[0]);
+                }
+                else
+                {
+                    // Handle the case where ID is DBNull
+                    throw new Exception("ID is NULL");
+                }
+
+                // Adjust these indexes according to your GridView's column structure
+                string name = ((TextBox)row.Cells[2].Controls[0]).Text;
+                string email = ((TextBox)row.Cells[3].Controls[0]).Text;
+                string phoneNumber = ((TextBox)row.Cells[4].Controls[0]).Text;
+
+                string query = "UPDATE Creative5 SET Name=@Name, Email=@Email, PhoneNumber=@PhoneNumber WHERE ID=@ID";
+                SqlCommand cmd = new SqlCommand(query, con);
+                cmd.Parameters.AddWithValue("@Name", name);
+                cmd.Parameters.AddWithValue("@Email", email);
+                cmd.Parameters.AddWithValue("@PhoneNumber", phoneNumber);
+                cmd.Parameters.AddWithValue("@ID", ID);
+
+                con.Open();
+                cmd.ExecuteNonQuery();
+            }
+            catch (SqlException sqlEx)
+            {
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", $"alert('SQL Error: {sqlEx.Message}');", true);
+            }
+            catch (Exception ex)
+            {
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", $"alert('Error: {ex.Message}');", true);
+            }
+            finally
+            {
+                con.Close();
+            }
+
+            GridView1.EditIndex = -1;
+            BindGridView();
+        }
+
+
+
+        private void BindGridView()
+        {
+            try
+            {
+                SqlDataAdapter da = new SqlDataAdapter("select ID, Name, Email, PhoneNumber from Creative5", con);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+                GridView1.DataSource = dt;
+                GridView1.DataBind();
+            }
+            catch (Exception ex)
+            {
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", $"alert('Error: {ex.Message}');", true);
+            }
+
+        }
+
+
+        private void ClearFields()
+        {
+            TextBox1.Text = "";
+            TextBox2.Text = "";
+            TextBox3.Text = "";
+            TextBox4.Text = "";
+        }
+    }
+}
+
+    
